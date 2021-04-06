@@ -3,14 +3,6 @@
 import copy
 
 
-class Choix:
-    """(à compléter)..."""
-
-    def __init__(self):
-        """(à compléter)..."""
-        pass
-
-
 class Action:
     """(à compléter)..."""
 
@@ -35,22 +27,18 @@ class Wallet:
 
     def make_purchase(self, action_name):
         """(à compléter)..."""
+        self.money -= self.possible_purchases[action_name].price
+
         if action_name in self.actions:
             self.actions[action_name] += 1
-            self.money -= self.possible_purchases[action_name].price
         else:
             self.actions[action_name] = 1
-            self.money -= self.possible_purchases[action_name].price
 
     def create_sub_wallet(self, action_name):
         """(à compléter)..."""
-        if self.possible_purchases[action_name].price <= self.money:
-            sub_wallet = copy.deepcopy(self)
-            sub_wallet.make_purchase(action_name)
-            self.sub_wallet.append(sub_wallet)
-            return True
-        else:
-            return False
+        sub_wallet = copy.deepcopy(self)
+        sub_wallet.make_purchase(action_name)
+        self.sub_wallet.append(sub_wallet)
 
     def create_all_sub_wallets(self):
         """(à compléter)..."""
