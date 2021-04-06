@@ -6,17 +6,21 @@ import copy
 class Action:
     """(à compléter)..."""
 
+    get_all: dict = {}
+
     def __init__(self, name, price, profit):
         """(à compléter)..."""
         self.name = name
         self.price = price
         self.profit = profit
+        Action.get_all[self.name] = self
 
 
 class Wallet:
     """(à compléter)..."""
 
     empty_wallets: list = []
+    optimum_wallet = None
 
     def __init__(self, money, actions, possible_purchases):
         """(à compléter)..."""
@@ -54,7 +58,33 @@ class Wallet:
 
         if not self.possible_purchases:
             Wallet.empty_wallets.append(self)
-            print(f"{self.money} with actions {self.actions}")
+            # print(f"{self.money} and {self.actions} +val: {self.get_money_return()}")
+            self.test_optimum_wallet()
+
+    def get_money_return(self):
+        """(à compléter)..."""
+        result = 0
+        for action_name, action_number in self.actions.items():
+            result += (
+                action_number
+                * Action.get_all[action_name].price
+                * Action.get_all[action_name].profit
+                / 100
+            )
+
+        return result
+
+    def test_optimum_wallet(self):
+        """(à compléter)..."""
+        if not Wallet.optimum_wallet:
+            Wallet.optimum_wallet = self
+            print(f"{self.money} and {self.actions} +val: {self.get_money_return()}")
+        else:
+            if Wallet.optimum_wallet.get_money_return() < self.get_money_return():
+                Wallet.optimum_wallet = self
+                print(
+                    f"{self.money} and {self.actions} +val: {self.get_money_return()}"
+                )
 
 
 class Application:
@@ -88,7 +118,7 @@ class Application:
             "Action-19": Action("Action-19", 24, 21),
             "Action-20": Action("Action-20", 114, 18),
         }
-        main_wallet = Wallet(12, {}, actions)
+        main_wallet = Wallet(20, {}, actions)
         main_wallet.create_all_sub_wallets()
 
 
