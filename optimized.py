@@ -1,5 +1,7 @@
 """Project OC DAP 7 main file."""
 
+import time
+
 
 class Action:
     """(à compléter)..."""
@@ -35,16 +37,15 @@ class Purchase:
         for action_name in self.actions:
             result += Action.get_all[action_name].brut_profit
 
-        return result
+        return round(result, 2)
 
     def calculate_price(self):
-        """(à compléter)..."""
         """(à compléter)..."""
         result = 0
         for action_name in self.actions:
             result += Action.get_all[action_name].price
 
-        return result
+        return round(result, 2)
 
 
 class DynamicWallet:
@@ -64,6 +65,8 @@ class DynamicWallet:
         for max_budget in max_budget_list:
             if previous_wallet:
 
+                no_new_purchase = previous_wallet.get_best_purchase(max_budget)
+
                 if Action.get_all[action_added].price <= max_budget:
                     new_purchase = Purchase([action_added])
                     remaining_purchase = previous_wallet.get_best_purchase(
@@ -77,10 +80,12 @@ class DynamicWallet:
                     else:
                         profit_with_new_action = new_purchase.brut_profit
 
-                    if (
-                        profit_with_new_action
-                        > previous_wallet.get_best_purchase(max_budget).brut_profit
-                    ):
+                    if no_new_purchase:
+                        profit_without_new_action = no_new_purchase.brut_profit
+                    else:
+                        profit_without_new_action = 0
+
+                    if profit_with_new_action > profit_without_new_action:
                         if remaining_purchase:
                             purchase_list = list(remaining_purchase.actions)
                         else:
@@ -88,14 +93,10 @@ class DynamicWallet:
                         purchase_list.append(action_added)
                         self.best_profit_by_budget[max_budget] = Purchase(purchase_list)
                     else:
-                        self.best_profit_by_budget[
-                            max_budget
-                        ] = previous_wallet.get_best_purchase(max_budget)
+                        self.best_profit_by_budget[max_budget] = no_new_purchase
 
                 else:
-                    self.best_profit_by_budget[
-                        max_budget
-                    ] = previous_wallet.get_best_purchase(max_budget)
+                    self.best_profit_by_budget[max_budget] = no_new_purchase
             else:
                 self.best_profit_by_budget[max_budget] = Purchase([action_added])
 
@@ -138,36 +139,34 @@ class DynamicWallet:
         index_action_treated = 0
         dynamic_wallets = {}
         previous_dynamic_wallet = None
+        wallet_memory_index = 0
 
-        dynamic_wallets[0] = DynamicWallet(
-            budget_max,
-            possible_purchases[index_action_treated],
-            previous_dynamic_wallet,
-        )
-        index_action_treated += 1
-        previous_dynamic_wallet = dynamic_wallets[0]
+        start_time = time.time()
 
-        dynamic_wallets[1] = DynamicWallet(
-            budget_max,
-            possible_purchases[index_action_treated],
-            previous_dynamic_wallet,
-        )
-        index_action_treated += 1
-        previous_dynamic_wallet = dynamic_wallets[1]
+        while index_action_treated < len(possible_purchases):
+            dynamic_wallets[wallet_memory_index] = DynamicWallet(
+                budget_max,
+                possible_purchases[index_action_treated],
+                previous_dynamic_wallet,
+            )
+            previous_dynamic_wallet = dynamic_wallets[wallet_memory_index]
+            index_action_treated += 1
+            wallet_memory_index += 1
+            if wallet_memory_index > 2:
+                wallet_memory_index = 0
 
-        dynamic_wallets[2] = DynamicWallet(
-            budget_max,
-            possible_purchases[index_action_treated],
-            previous_dynamic_wallet,
-        )
-        index_action_treated += 1
-
-        i_p = 2
-        for budget in dynamic_wallets[i_p].best_profit_by_budget.keys():
-            print(f"key {budget}")
-            print(dynamic_wallets[i_p].best_profit_by_budget[budget].actions)
-            print(dynamic_wallets[i_p].best_profit_by_budget[budget].brut_profit)
-            print(" ")
+        # print(previous_dynamic_wallet.best_profit_by_budget.keys())
+        print(" ")
+        print(" ")
+        exe_time = round(time.time() - start_time, 2)
+        print(f"Completed in {exe_time} seconds")
+        print(" ")
+        print("Optimum purchase has the following properties :")
+        budget = list(previous_dynamic_wallet.best_profit_by_budget.keys())[-1]
+        purchase = previous_dynamic_wallet.best_profit_by_budget[budget]
+        money_left = budget_max - purchase.price
+        profit = purchase.brut_profit
+        print(f"{money_left}€ left, {purchase.actions} brut profit: {profit}€")
 
 
 class Application:
