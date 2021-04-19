@@ -2,6 +2,7 @@
 
 import time
 import csv
+import numpy as np
 
 
 class Action:
@@ -38,7 +39,8 @@ class Action:
                     name = row[0]
                     price = round(float(row[1]), 2)
                     profit = round(float(row[2]), 2)
-                    result[name] = Action(name, price, profit)
+                    if price > 0:
+                        result[name] = Action(name, price, profit)
                     line_count += 1
 
         return result
@@ -124,20 +126,26 @@ class DynamicWallet:
 
     def define_max_budgets(self, budget_max, action_added, previous_wallet):
         """(à compléter)..."""
-        if previous_wallet:
-            previous_max_budget = list(previous_wallet.best_profit_by_budget.keys())
-            result = list(previous_max_budget)
-            previous_max_budget.append(0)
-            for budget in previous_max_budget:
-                budget_with_new_action = budget + Action.get_all[action_added].price
-                if budget_with_new_action <= budget_max:
-                    result.append(budget_with_new_action)
+        FIND_INTERVAL = True
 
-            result.sort()
+        if FIND_INTERVAL:
+            if previous_wallet:
+                previous_max_budget = list(previous_wallet.best_profit_by_budget.keys())
+                result = list(previous_max_budget)
+                previous_max_budget.append(0)
+                for budget in previous_max_budget:
+                    budget_with_new_action = budget + Action.get_all[action_added].price
+                    if budget_with_new_action <= budget_max:
+                        if budget_with_new_action not in result:
+                            result.append(budget_with_new_action)
+
+                result.sort()
+            else:
+                result = []
+                result.append(Action.get_all[action_added].price)
+                result.append(budget_max)
         else:
-            result = []
-            result.append(Action.get_all[action_added].price)
-            result.append(budget_max)
+            result = np.arange(0.01, budget_max, 0.01)
 
         return result
 
@@ -158,14 +166,18 @@ class DynamicWallet:
     @staticmethod
     def find_optimum_investment(budget_max, possible_purchases):
         """(à compléter)..."""
+        REFRESH_PRINT = 1
+        refresh_counter = REFRESH_PRINT
+
         index_action_treated = 0
+        total_actions = len(possible_purchases)
         dynamic_wallets = {}
         previous_dynamic_wallet = None
         wallet_memory_index = 0
 
         start_time = time.time()
 
-        while index_action_treated < len(possible_purchases):
+        while index_action_treated < total_actions:
             dynamic_wallets[wallet_memory_index] = DynamicWallet(
                 budget_max,
                 possible_purchases[index_action_treated],
@@ -176,6 +188,12 @@ class DynamicWallet:
             wallet_memory_index += 1
             if wallet_memory_index > 2:
                 wallet_memory_index = 0
+
+            refresh_counter -= 1
+            if refresh_counter == 0:
+                pourcent_progress = round(index_action_treated * 100 / total_actions, 2)
+                print(f"Progress : {pourcent_progress}%")
+                refresh_counter = REFRESH_PRINT
 
         # print(previous_dynamic_wallet.best_profit_by_budget.keys())
         print(" ")
@@ -200,7 +218,7 @@ class Application:
 
     def run(self):
         """Run the application."""
-        actions = Action.read_csv("dataset0.csv")
+        actions = Action.read_csv("dataset1.csv")
 
         DynamicWallet.find_optimum_investment(500, list(actions.keys()))
 
