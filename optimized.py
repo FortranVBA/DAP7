@@ -1,6 +1,7 @@
 """Project OC DAP 7 main file."""
 
 import time
+import csv
 
 
 class Action:
@@ -19,6 +20,27 @@ class Action:
     def calculate_brut_profit(self):
         """(à compléter)..."""
         result = self.price * self.profit / 100
+        return result
+
+    @staticmethod
+    def read_csv(csv_name):
+        """(à compléter)..."""
+        result = {}
+
+        with open(csv_name) as csv_file:
+            csv_reader = csv.reader(csv_file, delimiter=",")
+            line_count = 0
+            for row in csv_reader:
+                if line_count == 0:
+                    # Name / Price / Profit
+                    line_count += 1
+                else:
+                    name = row[0]
+                    price = round(float(row[1]), 2)
+                    profit = round(float(row[2]), 2)
+                    result[name] = Action(name, price, profit)
+                    line_count += 1
+
         return result
 
 
@@ -178,28 +200,7 @@ class Application:
 
     def run(self):
         """Run the application."""
-        actions = {
-            "Action-1": Action("Action-1", 20, 5),
-            "Action-2": Action("Action-2", 30, 10),
-            "Action-3": Action("Action-3", 50, 15),
-            "Action-4": Action("Action-4", 70, 20),
-            "Action-5": Action("Action-5", 60, 17),
-            "Action-6": Action("Action-6", 80, 25),
-            "Action-7": Action("Action-7", 22, 7),
-            "Action-8": Action("Action-8", 26, 11),
-            "Action-9": Action("Action-9", 48, 13),
-            "Action-10": Action("Action-10", 34, 27),
-            "Action-11": Action("Action-11", 42, 17),
-            "Action-12": Action("Action-12", 110, 9),
-            "Action-13": Action("Action-13", 38, 23),
-            "Action-14": Action("Action-14", 14, 1),
-            "Action-15": Action("Action-15", 18, 3),
-            "Action-16": Action("Action-16", 8, 8),
-            "Action-17": Action("Action-17", 4, 12),
-            "Action-18": Action("Action-18", 10, 14),
-            "Action-19": Action("Action-19", 24, 21),
-            "Action-20": Action("Action-20", 114, 18),
-        }
+        actions = Action.read_csv("dataset0.csv")
 
         DynamicWallet.find_optimum_investment(500, list(actions.keys()))
 
