@@ -4,12 +4,12 @@ import time
 
 
 class Action:
-    """(à compléter)..."""
+    """Project Action class."""
 
     get_all: dict = {}
 
     def __init__(self, name, price, profit):
-        """(à compléter)..."""
+        """Init Action class."""
         self.name = name
         self.price = price
         self.profit = profit
@@ -17,20 +17,20 @@ class Action:
         Action.get_all[self.name] = self
 
     def calculate_brut_profit(self):
-        """(à compléter)..."""
+        """Calculate action brut profit."""
         result = self.price * self.profit / 100
         return result
 
 
 class Wallet:
-    """(à compléter)..."""
+    """Project Wallet class."""
 
     optimum_wallet = None
     to_be_treated: list = []
     completed: list = []
 
     def __init__(self, money, actions, possible_purchases):
-        """(à compléter)..."""
+        """Init Wallet class."""
         self.money = money
         self.actions = actions.copy()
         self.possible_purchases = list(possible_purchases)
@@ -46,7 +46,14 @@ class Wallet:
             self.actions[action_name] = 1
 
     def create_sub_wallet(self):
-        """(à compléter)..."""
+        """Create 2 child wallets from another wallet.
+
+        The child wallets are created by taking the 1st possible action that can be
+        purchased and create one wallet with the purchase done (this action is removed
+        from possible purchased and the budget is decreased accordingly with the action
+        price), and one with the purchase not done (this action is removed from possible
+        purchased and the budget is not modified).
+        """
         action = self.possible_purchases[0]
         self.possible_purchases.remove(action)
 
@@ -67,7 +74,7 @@ class Wallet:
                 wallet_purchase.calculate_brut_profit()
 
     def calculate_brut_profit(self):
-        """(à compléter)..."""
+        """Calculate the wallet brut profit."""
         result = 0
         for action_name, action_number in self.actions.items():
             result += action_number * Action.get_all[action_name].brut_profit
@@ -76,7 +83,7 @@ class Wallet:
         self.test_optimum_wallet()
 
     def test_optimum_wallet(self):
-        """(à compléter)..."""
+        """Check if this is the optimum wallet."""
         if not Wallet.optimum_wallet:
             Wallet.optimum_wallet = self
         else:
@@ -85,7 +92,7 @@ class Wallet:
 
     @staticmethod
     def find_optimum_investment():
-        """(à compléter)..."""
+        """Find the optimum investment from wallets stored in Wallet.to_be_treated."""
         REFRESH_PRINT = 20000
         refresh_counter = REFRESH_PRINT
         combinaison_treated = 0

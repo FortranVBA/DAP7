@@ -4,14 +4,16 @@ import time
 import csv
 import numpy as np
 
+FIND_INTERVAL = True
+
 
 class Action:
-    """(à compléter)..."""
+    """Project Action class."""
 
     get_all: dict = {}
 
     def __init__(self, name, price, profit):
-        """(à compléter)..."""
+        """Init Action class."""
         self.name = name
         self.price = price
         self.profit = profit
@@ -19,13 +21,13 @@ class Action:
         Action.get_all[self.name] = self
 
     def calculate_brut_profit(self):
-        """(à compléter)..."""
+        """Calculate action brut profit."""
         result = self.price * self.profit / 100
         return result
 
     @staticmethod
     def read_csv(csv_name):
-        """(à compléter)..."""
+        """Read action data from csv file."""
         result = {}
 
         with open(csv_name) as csv_file:
@@ -47,16 +49,16 @@ class Action:
 
 
 class Purchase:
-    """(à compléter)..."""
+    """Project Purchase class."""
 
     def __init__(self, actions_list):
-        """(à compléter)..."""
+        """Init Purchase class."""
         self.actions = list(actions_list)
         self.price = self.calculate_price()
         self.brut_profit = self.calculate_brut_profit()
 
     def calculate_brut_profit(self):
-        """(à compléter)..."""
+        """Calculate purchase brut profit."""
         result = 0
         for action_name in self.actions:
             result += Action.get_all[action_name].brut_profit
@@ -64,7 +66,7 @@ class Purchase:
         return round(result, 2)
 
     def calculate_price(self):
-        """(à compléter)..."""
+        """Calculate purchase price."""
         result = 0
         for action_name in self.actions:
             result += Action.get_all[action_name].price
@@ -73,22 +75,23 @@ class Purchase:
 
 
 class DynamicWallet:
-    """(à compléter)..."""
+    """Project DynamicWallet class."""
+
+    fix_max_budgets: list = []
 
     def __init__(self, budget_max, action_added, previous_wallet):
-        """(à compléter)..."""
+        """Init DynamicWallet class."""
         self.best_profit_by_budget = {}
         self.calculate_best_profit(budget_max, action_added, previous_wallet)
 
     def calculate_best_profit(self, budget_max, action_added, previous_wallet):
-        """(à compléter)..."""
+        """Calculate best purchase for profit for dynamic wallet."""
         max_budget_list = self.define_max_budgets(
             budget_max, action_added, previous_wallet
         )
 
         for max_budget in max_budget_list:
             if previous_wallet:
-
                 no_new_purchase = previous_wallet.get_best_purchase(max_budget)
 
                 if Action.get_all[action_added].price <= max_budget:
@@ -122,12 +125,13 @@ class DynamicWallet:
                 else:
                     self.best_profit_by_budget[max_budget] = no_new_purchase
             else:
-                self.best_profit_by_budget[max_budget] = Purchase([action_added])
+                if Action.get_all[action_added].price <= max_budget:
+                    self.best_profit_by_budget[max_budget] = Purchase([action_added])
+                else:
+                    self.best_profit_by_budget[max_budget] = None
 
     def define_max_budgets(self, budget_max, action_added, previous_wallet):
-        """(à compléter)..."""
-        FIND_INTERVAL = True
-
+        """Define the budget studied for best purchases."""
         if FIND_INTERVAL:
             if previous_wallet:
                 previous_max_budget = list(previous_wallet.best_profit_by_budget.keys())
@@ -145,27 +149,51 @@ class DynamicWallet:
                 result.append(Action.get_all[action_added].price)
                 result.append(budget_max)
         else:
-            result = np.arange(0.01, budget_max, 0.01)
+            if DynamicWallet.fix_max_budgets:
+                result = DynamicWallet.fix_max_budgets
+            else:
+                np_list = np.arange(0.01, budget_max + 0.01, 0.01)
+                DynamicWallet.fix_max_budgets = [round(n, 2) for n in np_list]
+                result = DynamicWallet.fix_max_budgets
 
         return result
 
     def get_best_purchase(self, budget):
-        """(à compléter)..."""
-        max_budget_list = list(self.best_profit_by_budget.keys())
+        """Get the dynamic wallet best purchase associated with a fixed budget."""
+        if FIND_INTERVAL:
+            max_budget_list = list(self.best_profit_by_budget.keys())
 
-        index_result = "0"
-        for max_budget in max_budget_list:
-            if float(max_budget) <= budget:
-                index_result = max_budget
+            MIN_METHOD = True
 
-        if index_result == "0":
-            return None
+            if MIN_METHOD:
+                lower_budget_list = [
+                    element for element in max_budget_list if budget - element >= 0
+                ]
+                if lower_budget_list:
+                    index_result = min(lower_budget_list, key=lambda x: (budget - x))
+                else:
+                    index_result = 0
+
+                index_result = index_result
+            else:
+                index_result = 0
+                for max_budget in max_budget_list:
+                    if float(max_budget) <= budget:
+                        index_result = max_budget
+
+            if index_result == 0:
+                return None
+            else:
+                return self.best_profit_by_budget[index_result]
         else:
-            return self.best_profit_by_budget[index_result]
+            if round(budget, 2) < 0.01:
+                return None
+            else:
+                return self.best_profit_by_budget[round(budget, 2)]
 
     @staticmethod
     def find_optimum_investment(budget_max, possible_purchases):
-        """(à compléter)..."""
+        """Find the optimum investment with dynamic wallets creation."""
         REFRESH_PRINT = 1
         refresh_counter = REFRESH_PRINT
 
@@ -218,7 +246,7 @@ class Application:
 
     def run(self):
         """Run the application."""
-        actions = Action.read_csv("dataset1.csv")
+        actions = Action.read_csv("dataset0.csv")
 
         DynamicWallet.find_optimum_investment(500, list(actions.keys()))
 
