@@ -3,7 +3,7 @@
 import time
 
 REFRESH_PRINT = 20000
-STORE_COMPLETED_WALLET = False
+STORE_COMPLETED_WALLET = True
 
 
 class Action:

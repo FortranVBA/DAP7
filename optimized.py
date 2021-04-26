@@ -7,7 +7,7 @@ import math
 
 FIND_INTERVAL = False
 REFRESH_PRINT = 5
-ROUND_PURCHASE = True
+ROUND_PURCHASE = False
 MIN_METHOD = True
 CSV_FILE = "dataset2.csv"
 
