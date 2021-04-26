@@ -3,8 +3,13 @@
 import time
 import csv
 import numpy as np
+import math
 
-FIND_INTERVAL = True
+FIND_INTERVAL = False
+REFRESH_PRINT = 5
+ROUND_PURCHASE = True
+MIN_METHOD = True
+CSV_FILE = "dataset2.csv"
 
 
 class Action:
@@ -18,6 +23,10 @@ class Action:
         self.price = price
         self.profit = profit
         self.brut_profit = self.calculate_brut_profit()
+
+        if ROUND_PURCHASE:
+            self.price = math.ceil(price)
+
         Action.get_all[self.name] = self
 
     def calculate_brut_profit(self):
@@ -90,7 +99,6 @@ class DynamicWallet:
             budget_max, action_added, previous_wallet
         )
 
-        # start_time = time.time()
         for max_budget in max_budget_list:
             if previous_wallet:
                 no_new_purchase = previous_wallet.get_best_purchase(max_budget)
@@ -130,12 +138,9 @@ class DynamicWallet:
                     self.best_profit_by_budget[max_budget] = Purchase([action_added])
                 else:
                     self.best_profit_by_budget[max_budget] = None
-        # exe_time = round(time.time() - start_time, 2)
-        # print(f"calculate_best_profit in {exe_time} seconds {len(max_budget_list)}")
 
     def define_max_budgets(self, budget_max, action_added, previous_wallet):
         """Define the budget studied for best purchases."""
-        # start_time = time.time()
         if FIND_INTERVAL:
             if previous_wallet:
                 previous_max_budget = list(previous_wallet.best_profit_by_budget.keys())
@@ -147,7 +152,6 @@ class DynamicWallet:
                         if budget_with_new_action not in result:
                             result.append(budget_with_new_action)
 
-                result.sort()
             else:
                 result = []
                 result.append(Action.get_all[action_added].price)
@@ -156,12 +160,14 @@ class DynamicWallet:
             if DynamicWallet.fix_max_budgets:
                 result = DynamicWallet.fix_max_budgets
             else:
-                np_list = np.arange(0.01, budget_max + 0.01, 0.01)
+                if ROUND_PURCHASE:
+                    interval = 1
+                else:
+                    interval = 0.01
+
+                np_list = np.arange(interval, budget_max + interval, interval)
                 DynamicWallet.fix_max_budgets = [round(n, 2) for n in np_list]
                 result = DynamicWallet.fix_max_budgets
-
-        # exe_time = round(time.time() - start_time, 2)
-        # print(f"define_max_budgets in {exe_time} seconds")
 
         return result
 
@@ -169,8 +175,6 @@ class DynamicWallet:
         """Get the dynamic wallet best purchase associated with a fixed budget."""
         if FIND_INTERVAL:
             max_budget_list = list(self.best_profit_by_budget.keys())
-
-            MIN_METHOD = True
 
             if MIN_METHOD:
                 lower_budget_list = [
@@ -186,7 +190,8 @@ class DynamicWallet:
                 index_result = 0
                 for max_budget in max_budget_list:
                     if float(max_budget) <= budget:
-                        index_result = max_budget
+                        if index_result < float(max_budget):
+                            index_result = max_budget
 
             if index_result == 0:
                 return None
@@ -201,7 +206,6 @@ class DynamicWallet:
     @staticmethod
     def find_optimum_investment(budget_max, possible_purchases):
         """Find the optimum investment with dynamic wallets creation."""
-        REFRESH_PRINT = 1
         refresh_counter = REFRESH_PRINT
 
         index_action_treated = 0
@@ -226,19 +230,17 @@ class DynamicWallet:
 
             refresh_counter -= 1
             if refresh_counter == 0:
-                print(possible_purchases[index_action_treated])
                 pourcent_progress = round(index_action_treated * 100 / total_actions, 2)
                 print(f"Progress : {pourcent_progress}%")
                 refresh_counter = REFRESH_PRINT
 
-        # print(previous_dynamic_wallet.best_profit_by_budget.keys())
         print(" ")
         print(" ")
         exe_time = round(time.time() - start_time, 2)
         print(f"Completed in {exe_time} seconds")
         print(" ")
         print("Optimum purchase has the following properties :")
-        budget = list(previous_dynamic_wallet.best_profit_by_budget.keys())[-1]
+        budget = max(list(previous_dynamic_wallet.best_profit_by_budget.keys()))
         purchase = previous_dynamic_wallet.best_profit_by_budget[budget]
         money_left = budget_max - purchase.price
         profit = purchase.brut_profit
@@ -254,7 +256,7 @@ class Application:
 
     def run(self):
         """Run the application."""
-        actions = Action.read_csv("dataset1.csv")
+        actions = Action.read_csv(CSV_FILE)
 
         DynamicWallet.find_optimum_investment(500, list(actions.keys()))
 
