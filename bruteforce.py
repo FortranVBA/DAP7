@@ -2,6 +2,9 @@
 
 import time
 
+REFRESH_PRINT = 20000
+STORE_COMPLETED_WALLET = False
+
 
 class Action:
     """Project Action class."""
@@ -29,15 +32,15 @@ class Wallet:
     to_be_treated: list = []
     completed: list = []
 
-    def __init__(self, money, actions, possible_purchases):
+    def __init__(self, money, actions, possible_purchases, brut_profit):
         """Init Wallet class."""
         self.money = money
         self.actions = actions.copy()
         self.possible_purchases = list(possible_purchases)
-        self.brut_profit = 0
+        self.brut_profit = brut_profit
 
     def make_purchase(self, action_name):
-        """(à compléter)..."""
+        """Make a purchase with the wallet money."""
         self.money -= Action.get_all[action_name].price
 
         if action_name in self.actions:
@@ -57,30 +60,30 @@ class Wallet:
         action = self.possible_purchases[0]
         self.possible_purchases.remove(action)
 
-        wallet_no_purchase = Wallet(self.money, self.actions, self.possible_purchases)
+        brut_profit = self.brut_profit
+
+        wallet_no_purchase = Wallet(
+            self.money, self.actions, self.possible_purchases, brut_profit
+        )
         if wallet_no_purchase.possible_purchases:
             Wallet.to_be_treated.append(wallet_no_purchase)
         else:
-            Wallet.completed.append(wallet_no_purchase)
-            wallet_no_purchase.calculate_brut_profit()
+            if STORE_COMPLETED_WALLET:
+                Wallet.completed.append(wallet_no_purchase)
+            wallet_no_purchase.test_optimum_wallet()
 
         if Action.get_all[action].price <= self.money:
-            wallet_purchase = Wallet(self.money, self.actions, self.possible_purchases)
+            new_profit = brut_profit + Action.get_all[action].brut_profit
+            wallet_purchase = Wallet(
+                self.money, self.actions, self.possible_purchases, new_profit
+            )
             wallet_purchase.make_purchase(action)
             if wallet_no_purchase.possible_purchases:
                 Wallet.to_be_treated.append(wallet_purchase)
             else:
-                Wallet.completed.append(wallet_purchase)
-                wallet_purchase.calculate_brut_profit()
-
-    def calculate_brut_profit(self):
-        """Calculate the wallet brut profit."""
-        result = 0
-        for action_name, action_number in self.actions.items():
-            result += action_number * Action.get_all[action_name].brut_profit
-
-        self.brut_profit = result
-        self.test_optimum_wallet()
+                if STORE_COMPLETED_WALLET:
+                    Wallet.completed.append(wallet_purchase)
+                wallet_purchase.test_optimum_wallet()
 
     def test_optimum_wallet(self):
         """Check if this is the optimum wallet."""
@@ -93,7 +96,6 @@ class Wallet:
     @staticmethod
     def find_optimum_investment():
         """Find the optimum investment from wallets stored in Wallet.to_be_treated."""
-        REFRESH_PRINT = 20000
         refresh_counter = REFRESH_PRINT
         combinaison_treated = 0
         total_combinaison = 2 ** len(Action.get_all)
@@ -152,7 +154,7 @@ class Application:
             "Action-19": Action("Action-19", 24, 21),
             "Action-20": Action("Action-20", 114, 18),
         }
-        main_wallet = Wallet(500, {}, list(actions.keys()))
+        main_wallet = Wallet(500, {}, list(actions.keys()), 0)
         Wallet.to_be_treated.append(main_wallet)
 
         Wallet.find_optimum_investment()
