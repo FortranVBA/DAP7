@@ -50,8 +50,11 @@ class Action:
                     name = row[0]
                     price = round(float(row[1]), 2)
                     profit = round(float(row[2]), 2)
-                    if price > 0:
-                        result[name] = Action(name, price, profit)
+                    if name in result:
+                        del result[name]
+                    else:
+                        if price > 0:
+                            result[name] = Action(name, price, profit)
                     line_count += 1
 
         return result
